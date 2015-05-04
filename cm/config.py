@@ -253,7 +253,7 @@ def configure_logging(config):
     # format = config.get( "log_format", "%(name)s %(levelname)s %(asctime)s
     # %(message)s" )
     log_format = config.get(
-        "log_format", "%(asctime)s %(levelname)-7s %(module)12s:%(lineno)-4d %(message)s")
+        "log_format", "%(asctime)s %(levelname)-7s %(module)12s:%(lineno)-4d (%(threadName)-10s) %(message)s")
     level = logging._levelNames[config.get("log_level", "DEBUG")]
     destination = config.get("log_destination", "stdout")
     log.info("Logging at '%s' level to '%s'" % (level, destination))

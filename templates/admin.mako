@@ -45,35 +45,42 @@
                 </form>
             </li>
             <li>Galaxy is at revision: <span id="galaxy_rev">N/A</span></li>
-            <li>Update Galaxy from a provided repository
+            <li>Update Galaxy application
                 <span class="help_info">
                     <span class="help_link">What will this do?</span>
                     <div class="help_content" style="display: none">
-                        Update Galaxy source code from the repository provided
-                        in the form field. The repository can be the default
-                        <i>galaxy-central</i> or any other compatible branch.<br />
-                        Note that the update will be applied to the current
-                        instance only and upon termination of the cluster, the
-                        update will be reverted; the analysis results
-                        will be preserved. As a result, any analyses that depend
-                        on the updated functionality may not be preroducible
-                        on the new instance wihtout performing the update again.
-                        See <a href="https://bitbucket.org/galaxy/galaxy-central/wiki/Cloud/CustomizeGalaxyCloud" target="_blank">
-                        this page</a> about instructions on how to preserve the
-                        changes.<br />This action will:
+                        Update Galaxy application via an Ansible playbook
+                        from the repository provided in the form field.<br />
+                        This action will:
                         <ol>
                             <li>Stop Galaxy service</li>
-                            <li>Pull and apply any changes from the provided repository.
-                            If there are conflicts during the merge, local changes
-                            will be preserved.</li>
-                            <li>Call Galaxy database migration script</li>
+                            <li>Run the playbook from the provided URL</li>
                             <li>Start Galaxy service</li>
                         </ol>
                     </div>
                 </span>
                 <form class="generic_form" action="${h.url_for(controller='root', action='update_galaxy')}" method="post">
-                    <input type="text" value="http://bitbucket.org/galaxy/galaxy-dist" class="form_el" name="repository" size="45">
-                    <input type="submit" value="Update Galaxy">
+                    <table>
+                    ## Enable once tighter integration w/ playbook is done
+                    ## <tr>
+                    ##     <td>Galaxy git repository:</td>
+                    ##     <td>
+                    ##         <input type="text" value="https://github.com/galaxyproject/galaxy.git" class="form_el" name="galaxy_git_repo" size="45">
+                    ##     </td>
+                    ## </tr><tr>
+                    ##     <td>Changeset revision:</td>
+                    ##     <td>
+                    ##         <input type="text" value="master" class="form_el" name="changeset" size="45">
+                    ##     </td>
+                    ## </tr>
+                    <tr>
+                        <td>Ansible playbook:</td>
+                        <td>
+                            <input type="text" value="https://github.com/galaxyproject/galaxy-cloudman-playbook" class="form_el" name="playbook_git_repo" size="45">
+                        </td><td>
+                            <input type="submit" value="Update Galaxy">
+                        </td>
+                    </tr></table>
                 </form>
             </li>
         </ul>

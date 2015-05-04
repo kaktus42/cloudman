@@ -4,13 +4,20 @@ import os
 import subprocess
 import time
 
-import cm.util.paths as paths
-from cm.util import Time
-from cm.util import misc
+# from ansible.playbook import PlayBook
+# from ansible import callbacks
+# from git import Repo
+# from git import GitCommandError
+
 from cm.base.controller import BaseController
 from cm.framework import expose
 from cm.services import ServiceRole, ServiceType, service_states
+from cm.util import galaxy_util
+from cm.util import misc
+from cm.util import Time
+# from cm.util.cm_ansible import PlaybookRunnerCallbacks, PlaybookCallbacks, AggregateStats
 from cm.util.decorators import TestFlag
+import cm.util.paths as paths
 
 log = logging.getLogger('cloudman')
 
@@ -518,36 +525,72 @@ class CM(BaseController):
             return "Cannot find %s service." % service_name
 
     @expose
-    def update_galaxy(self, trans, repository="http://bitbucket.org/galaxy/galaxy-dist", db_only=False):
-        if db_only == 'True':
-            db_only = True
-            log.debug("Updating Galaxy database...")
-        else:
-            log.debug("Updating Galaxy... Using repository %s" % repository)
-        svcs = self.app.manager.get_services(svc_role=ServiceRole.GALAXY)
-        if svcs:
-            for service in svcs:
-                service.remove()
-            if not db_only:
-                cmd = '%s - galaxy -c "cd %s; hg --config ui.merge=internal:local pull %s --update"' % (
-                    paths.P_SU, self.app.path_resolver.galaxy_home, repository)
-                retval = os.system(cmd)
-                log.debug(
-                    "Galaxy update cmd '%s'; return value %s" % (cmd, retval))
-            cmd = '%s - galaxy -c "cd %s; sh manage_db.sh upgrade"' % (
-                paths.P_SU, self.app.path_resolver.galaxy_home)
-            retval = os.system(cmd)
-            log.debug(
-                "Galaxy DB update cmd '%s'; return value %s" % (cmd, retval))
-            for service in svcs:
-                service.start()
-            comment = "Done updating Galaxy."
-            log.debug(comment)
-            return comment
-        else:
-            comment = "Galaxy service does not seem to be configured."
-            log.warning(comment)
-            return comment
+    def update_galaxy(self, trans, changeset='master',
+                      galaxy_git_repo='https://github.com/galaxyproject/galaxy.git',
+                      playbook_git_repo='https://github.com/galaxyproject/galaxy-cloudman-playbook'):
+        """
+        Update Galaxy application.
+
+        This method will run a set of Ansible roles to update the Galaxy app
+        source code as well as perform any necessary database migrations. Any
+        local changes will be discarded. Also, the assumption is that no major
+        changes have been made to how Galaxy is setup.
+        """
+        return galaxy_util.update_galaxy(self.app, playbook_git_repo=playbook_git_repo)
+        # gxy_svc = self.app.manager.service_registry.get('Galaxy')
+        # self.app.manager.deactivate_master_service(gxy_svc, immediately=True)
+        # # First clone the Ansible playbook
+        # playbook_dir = '/tmp/galaxy_playbook'
+        # try:
+        #     Repo.clone_from(playbook_git_repo, playbook_dir)
+        # except GitCommandError, gce:
+        #     if gce.status == 128:
+        #         pass  # Repo already exists
+        #     else:
+        #         return "Trouble cloning playbook repo: {0}".format(gce)
+        # # Run the playbook to update Galaxy
+        # stats = AggregateStats()
+        # playbook_cb = PlaybookCallbacks()
+        # runner_cb = PlaybookRunnerCallbacks(stats)
+        # playbook_file = os.path.join(playbook_dir, 'galaxyFS.yml')
+        # pb = PlayBook(playbook=playbook_file, only_tags=['galaxy'],
+        #               host_list=['localhost'], stats=stats,
+        #               callbacks=playbook_cb, runner_callbacks=runner_cb)
+        # try:
+        #     pb.run()
+        # except AssertionError, aerr:
+        #     log.debug("AssertionError running Ansible playbook: {0}".format(aerr))
+        # if not stats.failures.get('localhost'):
+        #     self.app.manager.activate_master_service(gxy_svc)
+        #     return "Galaxy update completed."
+        # else:
+        #     return "Experienced a failure during Galaxy update. Check the log."
+
+        # log.debug("Updating Galaxy... Using repository %s" % repository)
+        # svcs = self.app.manager.get_services(svc_role=ServiceRole.GALAXY)
+        # if svcs:
+        #     for service in svcs:
+        #         service.remove()
+        #     if not db_only:
+        #         cmd = '%s - galaxy -c "cd %s; hg --config ui.merge=internal:local pull %s --update"' % (
+        #             paths.P_SU, self.app.path_resolver.galaxy_home, repository)
+        #         retval = os.system(cmd)
+        #         log.debug(
+        #             "Galaxy update cmd '%s'; return value %s" % (cmd, retval))
+        #     cmd = '%s - galaxy -c "cd %s; sh manage_db.sh upgrade"' % (
+        #         paths.P_SU, self.app.path_resolver.galaxy_home)
+        #     retval = os.system(cmd)
+        #     log.debug(
+        #         "Galaxy DB update cmd '%s'; return value %s" % (cmd, retval))
+        #     for service in svcs:
+        #         service.start()
+        #     comment = "Done updating Galaxy."
+        #     log.debug(comment)
+        #     return comment
+        # else:
+        #     comment = "Galaxy service does not seem to be configured."
+        #     log.warning(comment)
+        #     return comment
 
     @expose
     def add_galaxy_admin_users(self, trans, admin_users=None):
