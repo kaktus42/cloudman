@@ -155,7 +155,7 @@ def populate_galaxy_paths(option_manager):
     # but a relation to the required files is necessary so here it is.
     # properties['tool_config_file'] = "tool_conf.xml,shed_tool_conf.xml"
     tool_config_files = []
-    for tcf in ['tool_conf.xml', 'shed_tool_conf_cloud.xml']:
+    for tcf in ['../gbs_tools/gbs_tools_conf.xml', 'tool_conf.xml', 'shed_tool_conf_cloud.xml']:
         tool_config_files.append(join(path_resolver.galaxy_config_dir, tcf))
     properties['tool_config_file'] = ','.join(tool_config_files)
     properties["job_working_directory"] = join(temp_dir, "job_working_directory")
